@@ -1,0 +1,85 @@
+<html>
+<head>
+	<title>Chat</title>
+
+	<style>
+
+	</style>
+
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.1.6/semantic.min.css" media="screen" title="no title" charset="utf-8">
+</head>
+<body>
+	<div class="ui grid">
+
+		<div class="row">
+			<div class="sixteen wide column">
+				<div class="ui inverted dark blue segment">
+					<h1 class="header">Welcome to Web Commander</h1>
+				</div>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="four wide column">
+				<div class="ui green segment">
+					<h2>Online</h2>
+					<div class="ui list">
+						<div class="item"><i class="icon user"></i>Guy</div>
+						<div class="item"><i class="icon user"></i>Guy2</div>
+						<div class="item"><i class="icon user"></i>Guy3</div>
+						<div class="item"><i class="icon user"></i>Guy4</div>
+						<div class="item"><i class="icon user"></i>Guy5</div>
+						<div class="item"><i class="icon user"></i>Guy6</div>
+					</div>
+				</div>
+			</div>
+			<div class="twelve wide column">
+				<div class="ui blue segment">
+					<h2>Command Console</h2>
+					<ul id="messages"></ul>
+
+					<div class="ui fluid action input">
+					  <input id="chattxt" type="text" placeholder="i am the very model of a modern major general ...">
+					  <div id="chatbtn" class="ui button">Search</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+	</div>
+
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.1.6/semantic.min.js" charset="utf-8"></script>
+	<script>
+		$(function(){
+			var socket = null;
+			var msgBox = $("#chattxt");
+			var messages = $("#messages");
+
+			$("#chatbtn").click(function() {
+				if (!msgBox.val())
+					return
+				if (!socket) {
+					alert("Error: There is no socket connection.");
+					return
+				}
+				socket.send(msgBox.val());
+				msgBox.val("");
+				return false;
+			})
+
+			if (!window["WebSocket"]) {
+				alert("Error: Your browser does not support web sockets.")
+			} else {
+				socket = new WebSocket("ws://{{.Host}}/room");
+				socket.onclose = function() {
+					alert("Connection has been closed.");
+				}
+				socket.onmessage = function(e) {
+					messages.append($("<li>").text(e.data));
+				}
+			}
+		});
+	</script>
+</body>
+</html>
