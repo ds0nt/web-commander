@@ -56,7 +56,13 @@ const (
   messageBufferSize = 256
 )
 
-var upgrader = &websocket.Upgrader{ReadBufferSize: socketBufferSize, WriteBufferSize: socketBufferSize}
+var upgrader = &websocket.Upgrader{
+  ReadBufferSize: socketBufferSize,
+  WriteBufferSize: socketBufferSize,
+  CheckOrigin: func(r *http.Request) bool {
+    return true
+  },
+}
 
 func (r *room) ServeHTTP(w http.ResponseWriter, req *http.Request) {
   log.Printf("Web Socket Upgrade")
