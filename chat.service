@@ -1,0 +1,13 @@
+[Unit]
+Description=MyApp
+After=docker.service
+Requires=docker.service
+
+[Service]
+TimeoutStartSec=0
+ExecStartPre=-/usr/bin/docker kill web-commander
+ExecStartPre=-/usr/bin/docker rm web-commander
+ExecStart=/usr/bin/docker run --name web-commander web-commander
+
+[Install]
+WantedBy=multi-user.target
