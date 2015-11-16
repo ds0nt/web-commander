@@ -3,7 +3,6 @@ package main
 import (
   "github.com/gorilla/websocket"
   "log"
-//  "strings"
 )
 
 type client struct {
@@ -19,9 +18,9 @@ func (c *client) read() {
     if err == nil {
       str := string(msg)
       if str[0:1] == "/" {
-        c.room.commands <-msg
+        cmd := NewCommand(c, c.room, str)
+        cmds.commands <- cmd
       }
-       
       c.room.forward <- msg
     } else {
       break

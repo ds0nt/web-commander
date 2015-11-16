@@ -15,7 +15,7 @@ type room struct {
   join chan *client
   // leave is a channel for clients wishing to leave the room.
   leave chan *client
-  commands chan string
+  commands chan []byte
   // clients holds all current clients in this room.
   clients map[*client]bool
 }
@@ -25,7 +25,7 @@ func newRoom() *room {
     forward: make(chan []byte),
     join:    make(chan *client),
     leave:   make(chan *client),
-    commands:   make(chan string),
+    commands:   make(chan []byte),
     clients: make(map[*client]bool),
   }
   log.Printf("Creating Room: %v", room)

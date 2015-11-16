@@ -7,6 +7,8 @@ import (
   "github.com/rs/cors"
 )
 
+var cmds *commander
+
 func main() {
   c := cors.New(cors.Options{
     AllowedOrigins: []string{"*"},
@@ -15,10 +17,12 @@ func main() {
   })
 
   r := newRoom()
+  cmds = newCommander()
+  go cmds.Run()
 
   http.Handle("/", c.Handler(&templateHandler{filename: "chat.html"}))
   http.Handle("/room", c.Handler(r))
-
+  http.Handle("/assets/", http.StripPrefix("/assets", http.FileServer(http.Dir("./app/dist/"))))
   // get the room going
   go r.run()
 
