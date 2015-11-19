@@ -20,7 +20,8 @@ func main() {
   cmds = newCommander()
   go cmds.Run()
 
-  http.Handle("/", c.Handler(&templateHandler{filename: "chat.html"}))
+  fs := http.FileServer(http.Dir("app/dist"))
+  http.Handle("/", fs)
   http.Handle("/room", c.Handler(r))
   http.Handle("/assets/", http.StripPrefix("/assets", http.FileServer(http.Dir("./app/dist/"))))
   // get the room going

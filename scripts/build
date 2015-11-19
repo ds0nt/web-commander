@@ -2,4 +2,4 @@
 
 cd $(dirname $0)/..
 
-go build -o web-commander
+go build -o forky-command
