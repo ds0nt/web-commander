@@ -1,1 +1,9 @@
 
+.messages {
+    list-style: none;
+}
+.messages {
+  display: block;
+  color: #9977AA;
+}
+  

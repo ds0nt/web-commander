@@ -13,9 +13,10 @@ class SocketMaster {
   }
 
   send(message) {
-    let payload = message.payload;
-    payload.type = message.type
-    this.socket.send(JSON.stringify(payload))
+    this.socket.send(JSON.stringify({
+      type: message.type,
+      payload: message.payload
+    }))
   }
 
   onOpen(e) {

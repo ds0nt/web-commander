@@ -1,3 +1,3 @@
-import Events from 'events'
+import { EventEmitter } from 'events'
 
-console.dir(Events);
+export default new EventEmitter()

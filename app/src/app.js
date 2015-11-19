@@ -1,12 +1,22 @@
 import Layout from './layout'
-
-
+import eventbus from './event-master'
+import { Message, MessageHandler } from './socket-master'
 
 import ReactDOM from 'react-dom'
 import React from 'react'
 
 
 let addMessage = () => {}
+
+class ChatInput extends React.Component {
+  onSubmit(e) {
+    new Chat(this.refs.chatInput.value).send()
+    e.preventDefault()
+  }
+  render() {
+    return (<form onSubmit={(e) => this.onSubmit(e)} ><input type="text" ref="chatInput"/></form>)
+  }
+}
 
 class Main extends React.Component {
   constructor(props) {
@@ -16,21 +26,27 @@ class Main extends React.Component {
       messages: [],
     }
 
-    let i = 1;
-    setInterval(() => {
-      this.setState({text: "Hello World " + i})
-      i++
-    }, 1000);
-    addMessage = (message) => {
-      let s = this.state
-      s.messages.push(message)
-      this.setState(s)
-    }
+    this.chatEvent = eventbus.on('in:chat', (message) => {
+      let { messages } = this.state
+      messages.push(message)
+      this.setState({
+        messages: messages
+      })
+    })
+  }
+  componentWillUnmount() {
+    this.chatEvent.off();
   }
   render() {
+    let { messages } = this.state
+    console.dir(messages)
+    messages = messages.map((v, k) => <li key={"message-" + k}>{v}</li>)
     return (<div>
       {this.state.text}
-      {this.state.messages.map((msg, k) => <span key={`message-${k}`}>{msg}</span>)}
+      <ul className="messages">
+        {messages}
+      </ul>
+      <ChatInput />
     </div>);
   }
 }
@@ -42,12 +58,16 @@ ReactDOM.render(
 
 
 
-
-import {Message, MessageHandler} from './socket-master'
-
 class Ping extends Message {
   constructor() {
     super('ping')
+  }
+}
+
+class Chat extends Message {
+  constructor(message) {
+    super('chat')
+    this.payload = message
   }
 }
 
@@ -56,13 +76,13 @@ setInterval(function () {
   msg.send()
 }, 1000);
 
+
 class DefaultMessageHandler extends MessageHandler {
   constructor() {
     super('default')
   }
   handle(data) {
     console.log("Default Handler caught message:", data)
-    addMessage('Ping!')
   }
 }
 new DefaultMessageHandler();
@@ -73,6 +93,17 @@ class PingMessageHandler extends MessageHandler {
   }
   handle(data) {
     console.log('Ping:', data)
-
+    eventbus.emit('in:ping', data)
   }
 }
+new PingMessageHandler();
+
+class ChatMessageHandler extends MessageHandler {
+  constructor() {
+    super('chat')
+  }
+  handle(data) {
+    eventbus.emit('in:chat', data.payload)
+  }
+}
+new ChatMessageHandler();
