@@ -1,7 +1,7 @@
 import React from 'react'
 
 const HEADER_HEIGHT = '50px'
-const LEFT_WIDTH = '300px'
+const LEFT_WIDTH = '200px'
 const RIGHT_WIDTH = '300px'
 
 class HeaderPane extends React.Component {
