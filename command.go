@@ -56,22 +56,6 @@ func NewAnaconda() {
   }
 }
 
-// type facebookConfig struct {
-//   AppID      string
-//   Secret     string
-//   APIVersion string
-// }
-
-// func NewFacebook() {
-//   facebook := facebookConfig{
-//     "139770796385531",
-//     "165e0c3e8e4711fa47800b3a331b3b26",
-//     "v2.5",
-//   }
-//   var globalApp = fb.New(facebook.AppID, facebook.Secret)
-
-// }
-
 // Nick Command
 type nickCommand struct {
   Client *client
