@@ -2,30 +2,33 @@ package main
 
 import (
   "github.com/gorilla/websocket"
+  "fmt"
   "log"
   "net/http"
 )
 
 type room struct {
-
-  // forward is a channel that holds incoming messages
-  // that should be forwarded to the other clients.
-  forward chan []byte
-  // join is a channel for clients wishing to join the room.
+  counter int
+  forward chan roomMessage
   join chan *client
-  // leave is a channel for clients wishing to leave the room.
   leave chan *client
-  commands chan []byte
-  // clients holds all current clients in this room.
+  commands chan roomMessage
   clients map[*client]bool
 }
 
+type roomMessage struct {
+  Type string `json:"type"`
+  Payload interface{} `json:"payload"`
+}
+
+
 func newRoom() *room {
   room := &room{
-    forward: make(chan []byte),
+    counter: 0,
+    forward: make(chan roomMessage),
     join:    make(chan *client),
     leave:   make(chan *client),
-    commands:   make(chan []byte),
+    commands:   make(chan roomMessage),
     clients: make(map[*client]bool),
   }
   log.Printf("Creating Room: %v", room)
@@ -39,13 +42,19 @@ func (r *room) run() {
       r.forward <- cmd
     case client := <-r.join:
       r.clients[client] = true
+      client.Name = fmt.Sprintf("anonymous%d", r.counter)
+      r.counter++
     case client := <-r.leave:
       delete(r.clients, client)
       close(client.send)
     case msg := <-r.forward:
       for client := range r.clients {
+        out := clientOutMessage{
+          Type: msg.Type,
+          Payload: msg.Payload,
+        }
         select {
-        case client.send <- msg:
+        case client.send <-out:
         default:
           delete(r.clients, client)
           close(client.send)
@@ -76,11 +85,7 @@ func (r *room) ServeHTTP(w http.ResponseWriter, req *http.Request) {
     return
   }
 
-  client := &client{
-    socket: socket,
-    send:   make(chan []byte, messageBufferSize),
-    room:   r,
-  }
+  client := newClient(socket, r)
   r.join <- client
   defer func() {
     r.leave <- client

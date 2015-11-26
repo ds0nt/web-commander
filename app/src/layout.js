@@ -12,9 +12,8 @@ class HeaderPane extends React.Component {
       left: 0,
       right: 0,
       height: HEADER_HEIGHT,
-      borderBottom: '1px solid #aaa',
     }
-    return (<div style={style}>
+    return (<div style={style} className="header-section">
       {this.props.children}
     </div>);
   }
@@ -28,9 +27,8 @@ class LeftPane extends React.Component {
       top: this.props.layoutState.header ? HEADER_HEIGHT : 0,
       bottom: 0,
       width: LEFT_WIDTH,
-      borderRight: '1px solid #aaa',
     }
-    return (<div style={style}>
+    return (<div style={style} className="left-section">
       {this.props.children}
     </div>);
   }
@@ -45,9 +43,8 @@ class RightPane extends React.Component {
       top: this.props.layoutState.header ? HEADER_HEIGHT : 0,
       bottom: 0,
       width: RIGHT_WIDTH,
-      borderLeft: '1px solid #aaa',
     }
-    return (<div style={style}>
+    return (<div style={style} className="right-section">
       {this.props.children}
     </div>);
   }
@@ -63,7 +60,7 @@ class MainPane extends React.Component {
       bottom: 0,
     }
 
-    return (<div style={style}>
+    return (<div style={style} className="main-section">
       {this.props.children}
     </div>);
   }

@@ -2,8 +2,55 @@
 .messages {
     list-style: none;
 }
+
 .messages {
   display: block;
-  color: #9977AA;
+  color: #95C1BF;
 }
-  
+
+.right-section, .right-pane {
+    background-color: #21141F !important;
+    color: #EEFEFE !important;
+    border: none !important;
+}
+
+.left-section, .left-pane, .left-pane * {
+    background-color: #21141F !important;
+    color: #EEFEFE !important;
+    border: none !important;
+}
+
+.right-section {
+
+}
+
+.header-section, .header-pane, .header-pane-item {
+  background-color: #21141F !important;
+  color: #EEFEFE !important;
+}
+
+body {
+  background: black;
+}
+
+.main-pane {
+  position: absolute;
+  bottom: 0;
+  margin-top: auto;
+  left: 1em;
+  right: 1em;
+}
+
+.main-pane-inner {
+
+}
+
+.chat.input {
+  width: 100%;
+  margin-top: 1em;
+  padding: 0.5em;
+  color: #95C1BF !important;
+  border: #95C1BF 2px solid !important;
+  background: none !important;
+
+}

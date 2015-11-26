@@ -8,33 +8,37 @@ import (
 
 type client struct {
   socket *websocket.Conn
-  send   chan []byte
+  Name   string
+  send   chan clientOutMessage
   room   *room
 }
 
-type message struct {
+type clientMessage struct {
   Type string `json:"type"`
   Payload interface{} `json:"payload"`
+  Client *client
+}
+type clientOutMessage struct {
+  Type string `json:"type"`
+  Payload interface{} `json:"payload"`
+}
+
+func newClient(socket *websocket.Conn, room *room) *client {
+  return &client{socket, "", make(chan clientOutMessage, messageBufferSize), room }
 }
 
 func (c *client) read() {
   for {
     _, msg, err := c.socket.ReadMessage()
     if err == nil {
-      var f message
+      var f clientMessage
       err := json.Unmarshal(msg, &f)
+      f.Client = c
       if err != nil {
         log.Printf("Evil JSON Detected: %v, %v", err, string(msg))
         continue
       }
-      switch f.Type {
-      case "chat":
-        c.room.forward <- []byte(f.Payload.(string))
-      case "command":
-        cmd := NewCommand(c, c.room, f.Payload.(string))
-        cmds.commands <- cmd
-      }
-
+      commandSwitch.Messages <- &f
     } else {
       break
     }
@@ -44,10 +48,7 @@ func (c *client) read() {
 
 func (c *client) write() {
   for msg := range c.send {
-    var f message
-    f.Type = "chat"
-    f.Payload = string(msg)
-    bytes, err := json.Marshal(&f)
+    bytes, err := json.Marshal(&msg)
     if err != nil {
       log.Printf("Client Write Json Marshal Error: %v, %v", err, msg)
     }
@@ -55,7 +56,7 @@ func (c *client) write() {
       log.Printf("Client Write Error: %v", err)
       break
     } else {
-      log.Println("Client Write")
+      log.Printf("Client Send: %v", msg)
     }
   }
 }

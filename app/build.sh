@@ -7,13 +7,6 @@ else
   output=$(realpath $output)
 fi
 
-scanActions() {
-  echo 'window.ACTIONS = {}'
-  grep -rEo 'ACTIONS\.[A-Z_]+' ./* | cut -d: -f2 | cut -d. -f2 | sort | uniq | while read x; do
-    echo "window.ACTIONS.$x = '$x'"
-  done
-}
-
 build() {
   local dist="$1"
   [ -d $dist ] || mkdir -p $dist
@@ -26,7 +19,5 @@ build() {
   echo "copy echo $(pwd)/public"
   cp -urv public/* "$dist/"
 }
-
-scanActions > "$output/actions.js"
 
 build $output

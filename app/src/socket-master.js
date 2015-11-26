@@ -52,6 +52,7 @@ class Message {
     this.payload = payload
   }
   send() {
+    console.log("Sent Message:", this)
     SocketMain.send(this)
   }
 }

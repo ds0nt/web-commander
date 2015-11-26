@@ -10,12 +10,19 @@ let addMessage = () => {}
 
 class ChatInput extends React.Component {
   onSubmit(e) {
-    new Chat(this.refs.chatInput.value).send()
-    this.refs.chatInput.value = ""
     e.preventDefault()
+    let val = this.refs.chatInput.value
+    this.refs.chatInput.value = ""
+    if (val.startsWith('/nick')) {
+      new Nick(val).send()
+    } else if (val.startsWith('/tweet')) {
+      new Tweet(val).send()
+    } else {
+      new Chat(val).send()
+    }
   }
   render() {
-    return (<form onSubmit={(e) => this.onSubmit(e)} ><input className="ui input" type="text" ref="chatInput"/></form>)
+    return (<form onSubmit={(e) => this.onSubmit(e)} ><input className="ui chat input" type="text" ref="chatInput"/></form>)
   }
 }
 
@@ -34,19 +41,29 @@ class Main extends React.Component {
         messages: messages
       })
     })
+
+    this.chatEvent2 = eventbus.on('in:nick', (message) => {
+      let { messages } = this.state
+      messages.push(message)
+      this.setState({
+        messages: messages
+      })
+    })
   }
   componentWillUnmount() {
     this.chatEvent.off();
+    this.chatEvent2.off();
   }
   render() {
     let { messages } = this.state
-    console.dir(messages)
-    messages = messages.map((v, k) => <div className="ui chat item" key={"message-" + k}>ds0nt: {v}</div>)
+    messages = messages.map((v, k) => <div className="ui chat item" key={"message-" + k}>{v}</div>)
     return (
-      <div className="ui list messages">
-        <div className="ui header item">{this.state.text}</div>
-        {messages}
-        <ChatInput />
+      <div className="ui list messages main-pane">
+        <div className="main-pane-inner">
+          <div className="ui header item main-pane-item">{this.state.text}</div>
+          {messages}
+          <ChatInput />
+        </div>
       </div>
     );
   }
@@ -54,15 +71,20 @@ class Main extends React.Component {
 
 class HeaderPane extends React.Component {
   render() {
-    return (<div className="ui menu"><div className="ui header item">Forky</div></div>);
+    let tabs = ["Room 1"]
+    tabs = tabs.map(v => (<div className="ui item">{v}</div>))
+    return (<div className="ui menu header-pane">
+      <div className="ui header item header-pane-item">Forky</div>
+      {tabs}
+    </div>);
   }
 }
 
 class ChatPane extends React.Component {
   render() {
     let chatData = ["ds0nt", "john-bot", "jack-bot", "jill-bot"]
-    let chatters = chatData.map(v => (<div className="item">{v}</div>))
-    return (<div className="ui inverted red attached vertical menu">
+    let chatters = chatData.map(v => (<div className="item left-pane-item">{v}</div>))
+    return (<div className="ui attached vertical menu left-pane">
       <div className="ui small header item">Room</div>
       {chatters}
     </div>);
@@ -73,14 +95,14 @@ class AppPane extends React.Component {
   render() {
     let apps = ["abcd", "bcde", "cdef"]
 
-    let cards = apps.map(v => (<div className="ui inverted red column">
+    let cards = apps.map(v => (<div className="ui column right-pane-item">
     <div className="ui raised segment">
       <a className="ui black ribbon label">Overview</a>
       <span>{v}</span>
       <p></p>
     </div>
   </div>))
-    return (<div className="ui two column padded grid">
+    return (<div className="ui two column padded grid right-pane">
         {cards}
     </div>);
   }
@@ -106,10 +128,24 @@ class Chat extends Message {
   }
 }
 
+class Nick extends Message {
+  constructor(message) {
+    super('nick')
+    this.payload = message.slice(6)
+  }
+}
+
+class Tweet extends Message {
+  constructor(message) {
+    super('tweet')
+    this.payload = message.slice(7)
+  }
+}
+
 setInterval(function () {
   let msg = new Ping()
   msg.send()
-}, 1000);
+}, 10000);
 
 
 class DefaultMessageHandler extends MessageHandler {
@@ -127,17 +163,29 @@ class PingMessageHandler extends MessageHandler {
     super('ping')
   }
   handle(data) {
-    console.log('Ping:', data)
+    console.log("Received Message:", data)
     eventbus.emit('in:ping', data)
   }
 }
 new PingMessageHandler();
+
+class NickMessageHandler extends MessageHandler {
+  constructor() {
+    super('nick')
+  }
+  handle(data) {
+    console.log("Received Message:", data)
+    eventbus.emit('in:nick', data.payloadcd)
+  }
+}
+new NickMessageHandler();
 
 class ChatMessageHandler extends MessageHandler {
   constructor() {
     super('chat')
   }
   handle(data) {
+    console.log("Received Message:", data)
     eventbus.emit('in:chat', data.payload)
   }
 }
