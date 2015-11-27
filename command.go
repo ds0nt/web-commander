@@ -90,6 +90,10 @@ func newSearchTwitterCommand(client *client, data interface{}) *tweetSearchComma
 }
 
 func (s *tweetSearchCommand) Execute() {
+  s.Client.room.forward <- roomMessage{
+    Type:    "chat",
+    Payload: fmt.Sprintf("Searching Twitter: %s", s.Query),
+  }
   searchResult, _ := twitterApi.GetSearch(s.Query, nil)
   for _, tweet := range searchResult.Statuses {
     s.Client.room.forward <- roomMessage{
