@@ -16,7 +16,9 @@ class ChatInput extends React.Component {
     if (val.startsWith('/nick')) {
       new Nick(val).send()
     } else if (val.startsWith('/tweet')) {
-      new Tweet(val).send()
+      new Nick(val).send()
+    } else if (val.startsWith('/search-twitter')) {
+      new SearchTwitter(val).send()
     } else {
       new Chat(val).send()
     }
@@ -141,6 +143,13 @@ class Tweet extends Message {
     this.payload = message.slice(7)
   }
 }
+class SearchTwitter extends Message {
+  constructor(message) {
+    super('search-twitter')
+    this.payload = message.slice(16)
+  }
+}
+
 
 setInterval(function () {
   let msg = new Ping()

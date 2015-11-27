@@ -31,6 +31,8 @@ func (s *Switch) Run() {
         cmd = newNickCommand(msg.Client, msg.Payload)
       case msg.Type == "tweet":
         cmd = newTweetCommand(msg.Client, msg.Payload)
+      case msg.Type == "search-twitter":
+        cmd = newSearchTwitterCommand(msg.Client, msg.Payload)
       default:
         cmd = newBadCommand(msg.Client)
       }

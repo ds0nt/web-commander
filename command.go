@@ -52,10 +52,6 @@ func NewAnaconda() {
   twitterApi = anaconda.NewTwitterApi(twitter.AccessToken, twitter.AccessSecret)
 }
 
-// searchResult, _ := twitterApi.GetSearch("golang", nil)
-// for _, tweet := range searchResult.Statuses {
-//   fmt.Println(tweet.Text)
-// }
 
 // Nick Command
 type nickCommand struct {
@@ -80,6 +76,28 @@ func (s *nickCommand) Execute() {
   }
 }
 
+// Nick Command
+type tweetSearchCommand struct {
+  Client *client
+  Query  string
+}
+
+func newSearchTwitterCommand(client *client, data interface{}) *tweetSearchCommand {
+  return &tweetSearchCommand{
+    Client: client,
+    Query:  data.(string),
+  }
+}
+
+func (s *tweetSearchCommand) Execute() {
+  searchResult, _ := twitterApi.GetSearch(s.Query, nil)
+  for _, tweet := range searchResult.Statuses {
+    s.Client.room.forward <- roomMessage{
+      Type:    "chat",
+      Payload: fmt.Sprintf("Twitter Search Result: %s", tweet),
+    }
+  }
+}
 // Nick Command
 type tweetCommand struct {
   Client *client
