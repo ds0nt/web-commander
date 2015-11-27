@@ -94,7 +94,7 @@ func (s *tweetSearchCommand) Execute() {
   for _, tweet := range searchResult.Statuses {
     s.Client.room.forward <- roomMessage{
       Type:    "chat",
-      Payload: fmt.Sprintf("Twitter Search Result: %s", tweet),
+      Payload: fmt.Sprintf("Twitter Search Result: %s", tweet.Text),
     }
   }
 }
