@@ -5,6 +5,34 @@ import { Message, MessageHandler } from './socket-master'
 import ReactDOM from 'react-dom'
 import React from 'react'
 
+require('codemirror/mode/javascript/javascript')
+require('codemirror/mode/css/css')
+require('codemirror/mode/yaml/yaml')
+
+import codebox from 'codemirror'
+
+
+class CodeBox extends React.Component {
+  constructor(props) {
+    super(props)
+  }
+  componentDidMount() {
+      this.setState({
+        codeBox: codebox.fromTextArea(this.refs.code, {
+          mode: 'javascript',
+          theme: 'monokai',
+          inputStyle: "contenteditable",
+          lineNumbers: true,
+          tabsize: 2
+        })
+      })
+  }
+  render() {
+    return (<textarea ref="code"></textarea>)
+  }
+
+}
+
 
 let addMessage = () => {}
 
@@ -64,6 +92,7 @@ class Main extends React.Component {
         <div className="main-pane-inner">
           <div className="ui header item main-pane-item">{this.state.text}</div>
           {messages}
+          <CodeBox />
           <ChatInput />
         </div>
       </div>
@@ -116,6 +145,10 @@ ReactDOM.render(
 )
 
 
+
+
+
+/// MESSAGES
 
 class Ping extends Message {
   constructor() {
