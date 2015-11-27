@@ -1,6 +1,5 @@
 .messages {
   list-style: none;
-  white-space: pre !important;
   font-family: monospace !important;
 }
 
@@ -11,7 +10,7 @@
 
 .right-section,
 .right-pane {
-  background-color: #21141F !important;
+  background-color: #5D3E58 !important;
   color: #EEFEFE !important;
   border: none !important;
 }
@@ -19,7 +18,7 @@
 .left-section,
 .left-pane,
 .left-pane * {
-  background-color: #21141F !important;
+  background-color: #5D3E58 !important;
   color: #EEFEFE !important;
   border: none !important;
 }
@@ -27,7 +26,7 @@
 .header-section,
 .header-pane,
 .header-pane-item {
-  background-color: #21141F !important;
+  background-color: #5D3E58 !important;
   color: #EEFEFE !important;
 }
 
