@@ -22,7 +22,7 @@ class ChatInput extends React.Component {
     }
   }
   render() {
-    return (<form onSubmit={(e) => this.onSubmit(e)} ><textarea className="ui chat input" type="text" ref="chatInput"></textarea></form>)
+    return (<form onSubmit={(e) => this.onSubmit(e)} ><textarea className="ui chat input" type="text" ref="chatInput"></textarea><submit></submit></form>)
   }
 }
 
