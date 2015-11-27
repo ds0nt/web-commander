@@ -16,6 +16,10 @@ type Config struct {
 		Token  string `toml:"token"`
 		Secret string `toml:"secret"`
 	} `toml:"twitter_access_token"`
+	Redis struct {
+		Host     string `toml:"host"`
+		Password string `toml:"password"`
+	} `toml:"redis"`
 }
 
 var config Config

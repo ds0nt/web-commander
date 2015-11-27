@@ -17,6 +17,7 @@ var (
 func main() {
   flag.Parse()
   loadConfig()
+  newRedis()
   NewAnaconda()
 
   c := cors.New(cors.Options{

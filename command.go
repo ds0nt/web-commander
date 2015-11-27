@@ -50,11 +50,12 @@ func NewAnaconda() {
   anaconda.SetConsumerSecret(twitter.ConsumerSecret)
 
   twitterApi = anaconda.NewTwitterApi(twitter.AccessToken, twitter.AccessSecret)
-  searchResult, _ := twitterApi.GetSearch("golang", nil)
-  for _, tweet := range searchResult.Statuses {
-    fmt.Println(tweet.Text)
-  }
 }
+
+// searchResult, _ := twitterApi.GetSearch("golang", nil)
+// for _, tweet := range searchResult.Statuses {
+//   fmt.Println(tweet.Text)
+// }
 
 // Nick Command
 type nickCommand struct {

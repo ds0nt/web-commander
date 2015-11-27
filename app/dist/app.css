@@ -1,5 +1,7 @@
 .messages {
   list-style: none;
+  white-space: pre !important;
+  font-family: monospace !important;
 }
 
 .messages {
