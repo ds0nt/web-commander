@@ -1,5 +1,5 @@
-import scriptbox from './app'
 import eventbus from './event-master'
+import { scriptBoxValue } from './scriptbox'
 
 const WEBSOCKET_ENDPOINT = `ws://${window.location.host}/room`
 
@@ -55,6 +55,8 @@ function messageSwitch(txt) {
     switch (command) {
     case 'nick':
       return Send.nick(args)
+    case 'cout':
+      return Send.chat("...\n" + scriptBoxValue())
     case 'tweet':
       return Send.tweet(args)
     case 'search-twitter':
@@ -64,7 +66,7 @@ function messageSwitch(txt) {
     }
     break;
   case '$':
-    return Send.script(command, scriptbox.getValue())
+    return Send.script(command, scriptBoxValue())
   case '!':
     return Send.run(command)
   }

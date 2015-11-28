@@ -1,42 +1,12 @@
 import Layout from './layout'
 import eventbus from './event-master'
-
 import notifications from './notifications'
-notifications.start()
-
 import { messageSwitch, Message, MessageHandler } from './socket-master'
-
+import { Scriptbox } from './scriptbox'
 import ReactDOM from 'react-dom'
 import React from 'react'
 
-require('codemirror/mode/javascript/javascript')
-require('codemirror/mode/css/css')
-require('codemirror/mode/yaml/yaml')
-
-import codebox from 'codemirror'
-
-export let scriptbox = null
-class CodeBox extends React.Component {
-  constructor(props) {
-    super(props)
-  }
-  componentDidMount() {
-    scriptbox = codebox.fromTextArea(this.refs.code, {
-      mode: 'javascript',
-      theme: 'monokai',
-      inputStyle: "contenteditable",
-      lineNumbers: true,
-      tabsize: 2
-    })
-    this.setState({
-      codeBox: scriptbox
-    })
-  }
-  render() {
-    return (<textarea ref="code"></textarea>)
-  }
-
-}
+notifications.start()
 
 class ChatInput extends React.Component {
   onSubmit(e) {
@@ -89,7 +59,7 @@ class Main extends React.Component {
           <div className="ui header item main-pane-item">{this.state.text}</div>
           {messages}
           <ChatInput />
-          <CodeBox />
+          <Scriptbox />
         </div>
       </div>
     );

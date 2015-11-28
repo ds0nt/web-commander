@@ -6,6 +6,7 @@
 .messages {
   display: block;
   color: #95C1BF;
+  white-space: pre-wrap;
 }
 
 .right-section,
@@ -28,6 +29,8 @@
 .header-pane-item {
   background-color: #5D3E58 !important;
   color: #EEFEFE !important;
+  z-index: 999 !important;
+  box-shadow: 0px 5px 15px rgba(0,0,0,0.66) !important;
 }
 
 body {
