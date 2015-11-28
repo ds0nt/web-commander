@@ -96,12 +96,29 @@ func (s *scriptCommand) Execute() {
   go s.Client.room.broadcast(fmt.Sprintf("%s", s.Script))
   ioutil.WriteFile(fmt.Sprintf("jobs/%s.js", s.Name), []byte(s.Script), 0644)
 
+}
+
+// Nick Command
+type runCommand struct {
+  Client *client
+  Name string
+}
+
+func newRunCommand(client *client, data interface{}) *runCommand {
+  payload := data.(map[string]interface {})
+  return &runCommand{
+    Client: client,
+    Name: payload["name"].(string),
+  }
+}
+
+func (s *runCommand) Execute() {
   go func() {
     out, err := exec.Command("./run-job.sh", s.Name).Output()
     if err != nil {
         log.Fatal(err)
     }
-    fmt.Printf("The date is %s\n", out)
+    fmt.Printf("Running Script: %s\n", out)
     s.Client.room.broadcast(fmt.Sprintf("results: \n%s", out))
   }()
 }

@@ -15,6 +15,7 @@
     "axios": "^0.7.0",
     "codemirror": "^5.9.0",
     "events": "^1.1.0",
+    "notifyjs": "^1.2.8",
     "react": "^0.14.2",
     "react-dom": "^0.14.2"
   }

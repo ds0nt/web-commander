@@ -33,6 +33,8 @@ func (s *Switch) Run() {
         cmd = newTweetCommand(msg.Client, msg.Payload)
       case msg.Type == "script":
         cmd = newScriptCommand(msg.Client, msg.Payload)
+      case msg.Type == "run":
+        cmd = newRunCommand(msg.Client, msg.Payload)
       case msg.Type == "search-twitter":
         cmd = newSearchTwitterCommand(msg.Client, msg.Payload)
       default:
