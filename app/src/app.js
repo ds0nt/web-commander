@@ -62,7 +62,7 @@ class Main extends React.Component {
     this.chatEvent2 = eventbus.on('in:chat', (message) => this.message(message))
     this.chatEvent3 = eventbus.on('in:nick', (message) => this.message(message))
     this.chatEvent4 = eventbus.on('log', (message) => this.message(message))
-
+    this.chatEvent5 = eventbus.on('socket:disconnect', () => this.message("------------ You have been disconnected from the server -------------"))
   }
 
   message(message) {
@@ -78,6 +78,7 @@ class Main extends React.Component {
     this.chatEvent2.off();
     this.chatEvent3.off();
     this.chatEvent4.off();
+    this.chatEvent5.off();
   }
   render() {
     let { messages } = this.state
@@ -87,8 +88,8 @@ class Main extends React.Component {
         <div className="main-pane-inner">
           <div className="ui header item main-pane-item">{this.state.text}</div>
           {messages}
-          <CodeBox />
           <ChatInput />
+          <CodeBox />
         </div>
       </div>
     );

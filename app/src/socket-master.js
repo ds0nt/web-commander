@@ -38,6 +38,7 @@ class SocketMaster {
   }
   onClose(e) {
     console.log('Socket Master onClose', e)
+    eventbus.emit('socket:disconnect')
   }
 
   register(type, messageHandler) {

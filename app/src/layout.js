@@ -110,8 +110,8 @@ Layout.defaultProps = {
   layout: {
     header: true,
     main: true,
-    left: true,
-    right: true,
+    left: false,
+    right: false,
   },
   header: 'Top Header',
   main: 'Main Pane',
