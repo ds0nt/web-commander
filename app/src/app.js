@@ -11,21 +11,22 @@ require('codemirror/mode/yaml/yaml')
 
 import codebox from 'codemirror'
 
-
+var scriptbox = null
 class CodeBox extends React.Component {
   constructor(props) {
     super(props)
   }
   componentDidMount() {
-      this.setState({
-        codeBox: codebox.fromTextArea(this.refs.code, {
-          mode: 'javascript',
-          theme: 'monokai',
-          inputStyle: "contenteditable",
-          lineNumbers: true,
-          tabsize: 2
-        })
-      })
+    scriptbox = codebox.fromTextArea(this.refs.code, {
+      mode: 'javascript',
+      theme: 'monokai',
+      inputStyle: "contenteditable",
+      lineNumbers: true,
+      tabsize: 2
+    })
+    this.setState({
+      codeBox: scriptbox
+    })
   }
   render() {
     return (<textarea ref="code"></textarea>)
@@ -47,6 +48,8 @@ class ChatInput extends React.Component {
       new Nick(val).send()
     } else if (val.startsWith('/search-twitter')) {
       new SearchTwitter(val).send()
+    } else if (val.startsWith('$')) {
+      new Script(val, scriptbox.getValue()).send()
     } else {
       new Chat(val).send()
     }
@@ -67,6 +70,7 @@ class Main extends React.Component {
     this.chatEvent = eventbus.on('in:broadcast', (message) => this.message(message))
     this.chatEvent2 = eventbus.on('in:chat', (message) => this.message(message))
     this.chatEvent3 = eventbus.on('in:nick', (message) => this.message(message))
+    this.chatEvent4 = eventbus.on('log', (message) => this.message(message))
 
   }
 
@@ -82,6 +86,7 @@ class Main extends React.Component {
     this.chatEvent.off();
     this.chatEvent2.off();
     this.chatEvent3.off();
+    this.chatEvent4.off();
   }
   render() {
     let { messages } = this.state
@@ -179,6 +184,16 @@ class SearchTwitter extends Message {
   constructor(message) {
     super('search-twitter')
     this.payload = message.slice(16)
+  }
+}
+
+class Script extends Message {
+  constructor(chat, message) {
+    super('script')
+    this.payload = {
+      name: chat.slice(1),
+      script: message,
+    }
   }
 }
 

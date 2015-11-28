@@ -4,7 +4,9 @@ import (
   "fmt"
   "github.com/ChimeraCoder/anaconda"
   // "github.com/huandu/facebook"
+  "io/ioutil"
   "log"
+  "os/exec"
 )
 
 type command interface {
@@ -71,6 +73,37 @@ func (s *nickCommand) Execute() {
   old := s.Client.Name
   s.Client.Name = s.Nick
   go s.Client.room.broadcast(fmt.Sprintf("%s has changed their name to %s.", old, s.Client.Name))
+}
+
+// Nick Command
+type scriptCommand struct {
+  Client *client
+  Script  string
+  Name string
+}
+
+func newScriptCommand(client *client, data interface{}) *scriptCommand {
+  payload := data.(map[string]interface {})
+  return &scriptCommand{
+    Client: client,
+    Script:  payload["script"].(string),
+    Name: payload["name"].(string),
+  }
+}
+
+func (s *scriptCommand) Execute() {
+  go s.Client.room.broadcast(fmt.Sprintf("%s has created script $%s", s.Client.Name, s.Name))
+  go s.Client.room.broadcast(fmt.Sprintf("%s", s.Script))
+  ioutil.WriteFile(fmt.Sprintf("jobs/%s.js", s.Name), []byte(s.Script), 0644)
+
+  go func() {
+    out, err := exec.Command("./run-job.sh", s.Name).Output()
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("The date is %s\n", out)
+    s.Client.room.broadcast(fmt.Sprintf("results: \n%s", out))
+  }()
 }
 
 // Nick Command
