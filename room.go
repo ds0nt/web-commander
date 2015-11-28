@@ -35,6 +35,10 @@ func newRoom() *room {
   return room
 }
 
+func (r *room) broadcast(text string) {
+  commandSwitch.Commands <-newBroadcastCommand(r, text)
+}
+
 func (r *room) run() {
   for {
     select {
@@ -44,7 +48,9 @@ func (r *room) run() {
       r.clients[client] = true
       client.Name = fmt.Sprintf("anonymous%d", r.counter)
       r.counter++
+      go r.broadcast(fmt.Sprintf("%s has joined the channel.", client.Name))
     case client := <-r.leave:
+      go r.broadcast(fmt.Sprintf("%s has left the channel.", client.Name))
       delete(r.clients, client)
       close(client.send)
     case msg := <-r.forward:

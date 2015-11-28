@@ -64,25 +64,24 @@ class Main extends React.Component {
       messages: [],
     }
 
-    this.chatEvent = eventbus.on('in:chat', (message) => {
-      let { messages } = this.state
-      messages.push(message)
-      this.setState({
-        messages: messages
-      })
-    })
+    this.chatEvent = eventbus.on('in:broadcast', (message) => this.message(message))
+    this.chatEvent2 = eventbus.on('in:chat', (message) => this.message(message))
+    this.chatEvent3 = eventbus.on('in:nick', (message) => this.message(message))
 
-    this.chatEvent2 = eventbus.on('in:nick', (message) => {
-      let { messages } = this.state
-      messages.push(message)
-      this.setState({
-        messages: messages
-      })
+  }
+
+  message(message) {
+    let { messages } = this.state
+    messages.push(message)
+    this.setState({
+      messages: messages
     })
   }
+
   componentWillUnmount() {
     this.chatEvent.off();
     this.chatEvent2.off();
+    this.chatEvent3.off();
   }
   render() {
     let { messages } = this.state
@@ -231,4 +230,19 @@ class ChatMessageHandler extends MessageHandler {
     eventbus.emit('in:chat', data.payload)
   }
 }
+
 new ChatMessageHandler();
+
+
+class BroadcastMessageHandler extends MessageHandler {
+  constructor() {
+    super('broadcast')
+  }
+  handle(data) {
+    console.log("Received Message:", data)
+    eventbus.emit('in:broadcast', data.payload)
+  }
+}
+
+
+new BroadcastMessageHandler();

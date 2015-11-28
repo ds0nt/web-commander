@@ -23,7 +23,7 @@ func newPingCommand(client *client, data interface{}) *pingCommand {
 }
 
 func (s *pingCommand) Execute() {
-  s.Client.room.forward <- roomMessage{
+  s.Client.send <- clientOutMessage{
     Type:    "ping",
     Payload: "pong",
   }
@@ -70,10 +70,7 @@ func newNickCommand(client *client, data interface{}) *nickCommand {
 func (s *nickCommand) Execute() {
   old := s.Client.Name
   s.Client.Name = s.Nick
-  s.Client.room.forward <- roomMessage{
-    Type:    "nick",
-    Payload: fmt.Sprintf("%s has changed their name to %s", old, s.Client.Name),
-  }
+  go s.Client.room.broadcast(fmt.Sprintf("%s has changed their name to %s.", old, s.Client.Name))
 }
 
 // Nick Command
@@ -137,6 +134,26 @@ func (s *sayCommand) Execute() {
   s.Client.room.forward <- roomMessage{
     Type:    "chat",
     Payload: fmt.Sprintf("%s: %s", s.Client.Name, s.Text),
+  }
+}
+
+// Say Command
+type broadcastCommand struct {
+  Room *room
+  Text   string
+}
+
+func newBroadcastCommand(room *room, data interface{}) *broadcastCommand {
+  return &broadcastCommand{
+    Room: room,
+    Text: data.(string),
+  }
+}
+
+func (s *broadcastCommand) Execute() {
+  s.Room.forward <- roomMessage{
+    Type:    "broadcast",
+    Payload: fmt.Sprintf("%s", s.Text),
   }
 }
 
