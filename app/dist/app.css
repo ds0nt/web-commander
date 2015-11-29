@@ -24,9 +24,7 @@
   border: none !important;
 }
 
-.header-section,
-.header-pane,
-.header-pane-item {
+.header-section * {
   background-color: #5D3E58 !important;
   color: #EEFEFE !important;
   z-index: 999 !important;

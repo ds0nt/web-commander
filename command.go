@@ -137,16 +137,16 @@ func newSearchTwitterCommand(client *client, data interface{}) *tweetSearchComma
 }
 
 func (s *tweetSearchCommand) Execute() {
-  s.Client.room.forward <- roomMessage{
+  s.Client.room.sendAll(clientOutMessage{
     Type:    "chat",
     Payload: fmt.Sprintf("Searching Twitter: %s", s.Query),
-  }
+  })
   searchResult, _ := twitterApi.GetSearch(s.Query, nil)
   for _, tweet := range searchResult.Statuses {
-    s.Client.room.forward <- roomMessage{
+    s.Client.room.sendAll(clientOutMessage{
       Type:    "chat",
       Payload: fmt.Sprintf("Twitter Search Result: %s", tweet.Text),
-    }
+    })
   }
 }
 // Nick Command
@@ -181,10 +181,10 @@ func newSayCommand(client *client, data interface{}) *sayCommand {
 }
 
 func (s *sayCommand) Execute() {
-  s.Client.room.forward <- roomMessage{
+  s.Client.room.sendAll(clientOutMessage{
     Type:    "chat",
     Payload: fmt.Sprintf("%s: %s", s.Client.Name, s.Text),
-  }
+  })
 }
 
 // Say Command
@@ -201,10 +201,10 @@ func newBroadcastCommand(room *room, data interface{}) *broadcastCommand {
 }
 
 func (s *broadcastCommand) Execute() {
-  s.Room.forward <- roomMessage{
+  s.Room.sendAll(clientOutMessage{
     Type:    "broadcast",
     Payload: fmt.Sprintf("%s", s.Text),
-  }
+  })
 }
 
 // Bad Command

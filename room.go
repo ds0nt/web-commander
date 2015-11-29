@@ -9,10 +9,10 @@ import (
 
 type room struct {
   counter int
-  forward chan roomMessage
+  forward chan clientOutMessage
   join chan *client
   leave chan *client
-  commands chan roomMessage
+  commands chan clientOutMessage
   clients map[*client]bool
 }
 
@@ -25,10 +25,9 @@ type roomMessage struct {
 func newRoom() *room {
   room := &room{
     counter: 0,
-    forward: make(chan roomMessage),
+    forward: make(chan clientOutMessage),
     join:    make(chan *client),
     leave:   make(chan *client),
-    commands:   make(chan roomMessage),
     clients: make(map[*client]bool),
   }
   log.Printf("Creating Room: %v", room)
@@ -39,33 +38,61 @@ func (r *room) broadcast(text string) {
   commandSwitch.Commands <-newBroadcastCommand(r, text)
 }
 
+func (r *room) sendAll(cmd clientOutMessage) {
+  r.forward <- cmd
+}
+
+func (r *room) sendOne(client *client, cmd clientOutMessage) {
+  client.send <- cmd
+}
+
+func (r *room) joinClient(client *client) {
+  r.join <- client
+}
+
+func (r *room) leaveClient(client *client) {
+  r.leave <- client
+}
+
+func (r *room) doJoin(client *client) {
+  r.clients[client] = true
+  client.Name = fmt.Sprintf("anon%d", r.counter)
+  go r.broadcast(fmt.Sprintf("%s has joined the channel.", client.Name))
+  r.sendOne(client, clientOutMessage{"chat", "Welcome to web commander."})
+  r.sendOne(client, clientOutMessage{"chat", "The current list of users are:"})
+
+  for c := range r.clients {
+    r.sendOne(client, clientOutMessage{"chat", c.Name})    
+  }
+}
+
+func (r *room) doLeave(client *client) {
+  go r.broadcast(fmt.Sprintf("%s has left the channel.", client.Name))
+  delete(r.clients, client)
+  close(client.send)
+}
+
+func (r *room) doSendAll(msg clientOutMessage) {
+    for client := range r.clients {
+      select {
+      case client.send <-msg:
+      default:
+        delete(r.clients, client)
+        close(client.send)
+      }
+    }
+}
+
 func (r *room) run() {
   for {
     select {
-    case cmd := <-r.commands:
-      r.forward <- cmd
+
     case client := <-r.join:
-      r.clients[client] = true
-      client.Name = fmt.Sprintf("anonymous%d", r.counter)
-      r.counter++
-      go r.broadcast(fmt.Sprintf("%s has joined the channel.", client.Name))
+      r.doJoin(client)
     case client := <-r.leave:
-      go r.broadcast(fmt.Sprintf("%s has left the channel.", client.Name))
-      delete(r.clients, client)
-      close(client.send)
+      r.doLeave(client)
     case msg := <-r.forward:
-      for client := range r.clients {
-        out := clientOutMessage{
-          Type: msg.Type,
-          Payload: msg.Payload,
-        }
-        select {
-        case client.send <-out:
-        default:
-          delete(r.clients, client)
-          close(client.send)
-        }
-      }
+      r.doSendAll(msg)
     }
   }
 }
@@ -92,10 +119,8 @@ func (r *room) ServeHTTP(w http.ResponseWriter, req *http.Request) {
   }
 
   client := newClient(socket, r)
-  r.join <- client
-  defer func() {
-    r.leave <- client
-  }()
+  r.joinClient(client)
+  defer r.leaveClient(client)
   go client.write()
   client.read()
 }
