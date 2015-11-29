@@ -9,7 +9,7 @@ import (
 type client struct {
   socket *websocket.Conn
   Name   string
-  send   chan clientOutMessage
+  out   chan *clientOutMessage
   room   *room
 }
 
@@ -24,30 +24,49 @@ type clientOutMessage struct {
 }
 
 func newClient(socket *websocket.Conn, room *room) *client {
-  return &client{socket, "", make(chan clientOutMessage, messageBufferSize), room }
+  return &client{socket, "", make(chan *clientOutMessage, messageBufferSize), room }
+}
+
+func (c *client) sendMessage(cmsg *clientOutMessage) {
+  c.out <- cmsg
+}
+
+func (c *client) doReadMessage() (*clientMessage, error) {
+  var f clientMessage
+  _, msg, err := c.socket.ReadMessage()
+  if err != nil {
+    return nil, err
+  }
+  err = json.Unmarshal(msg, &f)
+  if err != nil {
+    log.Printf("Bad JSON from client %s: %s", c.Name, string(msg))
+    return nil, err
+  }
+  f.Client = c
+  return &f, nil
+}
+
+func (c *client) doDrop() {
 }
 
 func (c *client) read() {
   for {
-    _, msg, err := c.socket.ReadMessage()
-    if err == nil {
-      var f clientMessage
-      err := json.Unmarshal(msg, &f)
-      f.Client = c
-      if err != nil {
-        log.Printf("Evil JSON Detected: %v, %v", err, string(msg))
-        continue
-      }
-      commandSwitch.Messages <- &f
-    } else {
+    msg, err := c.doReadMessage()
+    if err != nil {
+      log.Printf("Read Message Error %s", err)
       break
     }
+    commandSwitch.Messages <-msg
   }
+
+  log.Printf("Dropping Client %s: %s", c.Name)
   c.socket.Close()
+  close(c.out)
+  c.room.doLeave(c)
 }
 
 func (c *client) write() {
-  for msg := range c.send {
+  for msg := range c.out {
     bytes, err := json.Marshal(&msg)
     if err != nil {
       log.Printf("Client Write Json Marshal Error: %v, %v", err, msg)
@@ -55,8 +74,8 @@ func (c *client) write() {
     if err := c.socket.WriteMessage(websocket.TextMessage, bytes); err != nil {
       log.Printf("Client Write Error: %v", err)
       break
-    } else {
-      log.Printf("Client Send: %v", msg)
     }
+
+    log.Printf("Client Send: %v", msg)
   }
 }

@@ -25,10 +25,10 @@ func newPingCommand(client *client, data interface{}) *pingCommand {
 }
 
 func (s *pingCommand) Execute() {
-  s.Client.send <- clientOutMessage{
+  s.Client.sendMessage(&clientOutMessage{
     Type:    "ping",
     Payload: "pong",
-  }
+  })
 }
 
 type anacondaConfig struct {

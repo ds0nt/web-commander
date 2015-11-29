@@ -48,8 +48,8 @@ class SocketMaster {
 var SocketMain = new SocketMaster()
 
 function messageSwitch(txt) {
-  let [_, lead, command, args] = txt.match(/(.)(\S*)\s(.*)/)
-
+  let [_, lead, command, args] = txt.match(/(.)(\S*)(.*)/)
+  args = args.substring(1)
   switch (lead) {
   case '/':
     switch (command) {

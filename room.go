@@ -43,7 +43,7 @@ func (r *room) sendAll(cmd clientOutMessage) {
 }
 
 func (r *room) sendOne(client *client, cmd clientOutMessage) {
-  client.send <- cmd
+  go client.sendMessage(&cmd)
 }
 
 func (r *room) joinClient(client *client) {
@@ -56,37 +56,30 @@ func (r *room) leaveClient(client *client) {
 
 func (r *room) doJoin(client *client) {
   r.clients[client] = true
-  client.Name = fmt.Sprintf("anon%d", r.counter)
+
   go r.broadcast(fmt.Sprintf("%s has joined the channel.", client.Name))
-  r.sendOne(client, clientOutMessage{"chat", "Welcome to web commander."})
-  r.sendOne(client, clientOutMessage{"chat", "The current list of users are:"})
+  client.sendMessage(&clientOutMessage{"chat", "Welcome to web commander."})
+  client.sendMessage(&clientOutMessage{"chat", "The current list of users are:"})
 
   for c := range r.clients {
-    r.sendOne(client, clientOutMessage{"chat", c.Name})    
+    client.sendMessage(&clientOutMessage{"chat", c.Name})
   }
 }
 
 func (r *room) doLeave(client *client) {
   go r.broadcast(fmt.Sprintf("%s has left the channel.", client.Name))
   delete(r.clients, client)
-  close(client.send)
 }
 
 func (r *room) doSendAll(msg clientOutMessage) {
     for client := range r.clients {
-      select {
-      case client.send <-msg:
-      default:
-        delete(r.clients, client)
-        close(client.send)
-      }
+      client.sendMessage(&msg)
     }
 }
 
 func (r *room) run() {
   for {
     select {
-
     case client := <-r.join:
       r.doJoin(client)
     case client := <-r.leave:
@@ -121,6 +114,7 @@ func (r *room) ServeHTTP(w http.ResponseWriter, req *http.Request) {
   client := newClient(socket, r)
   r.joinClient(client)
   defer r.leaveClient(client)
+
   go client.write()
   client.read()
 }
