@@ -1,7 +1,7 @@
 import eventbus from './event-master'
 import { scriptBoxValue } from './scriptbox'
 
-const WEBSOCKET_ENDPOINT = `ws://${window.location.host}/room`
+const WEBSOCKET_ENDPOINT = `ws://${window.location.host}/room/home`
 
 class SocketMaster {
   constructor() {

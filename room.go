@@ -2,12 +2,14 @@ package main
 
 import (
   "github.com/gorilla/websocket"
+  "github.com/gorilla/mux"
   "fmt"
   "log"
   "net/http"
 )
 
 type room struct {
+  id string
   counter int
   forward chan clientOutMessage
   join chan *client
@@ -22,15 +24,16 @@ type roomMessage struct {
 }
 
 
-func newRoom() *room {
+func newRoom(id string) *room {
   room := &room{
+    id: id,
     counter: 0,
     forward: make(chan clientOutMessage),
     join:    make(chan *client),
     leave:   make(chan *client),
     clients: make(map[*client]bool),
   }
-  log.Printf("Creating Room: %v", room)
+  log.Printf("Creating Room: %v\n", id)
   return room
 }
 
@@ -103,7 +106,27 @@ var upgrader = &websocket.Upgrader{
   },
 }
 
-func (r *room) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+type rooms struct {
+  rooms map[string]*room
+}
+
+func newRooms() *rooms {
+  return &rooms{
+    rooms: make(map[string]*room),
+  }
+}
+
+func (all *rooms) Handle(w http.ResponseWriter, req *http.Request) {
+  log.Println("Connecting to room")
+  vars := mux.Vars(req)
+  roomId := vars["id"]
+
+  toRoom, ok := all.rooms[roomId]
+  if !ok {
+    toRoom = newRoom(roomId)
+    go toRoom.run()
+  }
+
   log.Printf("Web Socket Upgrade")
   socket, err := upgrader.Upgrade(w, req, nil)
   if err != nil {
@@ -111,9 +134,9 @@ func (r *room) ServeHTTP(w http.ResponseWriter, req *http.Request) {
     return
   }
 
-  client := newClient(socket, r)
-  r.joinClient(client)
-  defer r.leaveClient(client)
+  client := newClient(socket, toRoom)
+  toRoom.joinClient(client)
+  defer toRoom.leaveClient(client)
 
   go client.write()
   client.read()

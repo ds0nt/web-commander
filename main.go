@@ -4,7 +4,7 @@ import (
   "flag"
   "log"
   "net/http"
-
+  "github.com/gorilla/mux"
   "github.com/rs/cors"
 )
 
@@ -26,16 +26,19 @@ func main() {
     AllowedMethods: []string{"GET", "POST", "OPTIONS", "PUT"},
   })
 
-  r = newRoom()
   commandSwitch = NewSwitch()
-
-  go r.run()
   go commandSwitch.Run()
 
+  rooms := newRooms()
+
+  router := mux.NewRouter()
   fs := http.FileServer(http.Dir("app/dist"))
-  http.Handle("/", fs)
-  http.Handle("/room", c.Handler(r))
-  http.Handle("/assets/", http.StripPrefix("/assets", http.FileServer(http.Dir("./app/dist/"))))
+
+
+  router.HandleFunc("/room/{roomId}", rooms.Handle)
+  router.PathPrefix("/assets").Handler(http.StripPrefix("/assets", http.FileServer(http.Dir("./app/dist/"))))
+  router.PathPrefix("/").Handler(fs)
+  http.Handle("/", c.Handler(router))
   // get the room going
 
   // start the web server
