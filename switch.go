@@ -29,7 +29,7 @@ func (s *Switch) Run(rooms *rooms) {
       case msg.Type == "ping":
         cmd = newPingCommand(msg.Client, room, msg.Payload)
       case msg.Type == "join":
-        cmd = newJoinCommand(msg.Client, room, msg.Payload)
+        cmd = newJoinCommand(msg.Client, room, msg.Payload, rooms)
       case msg.Type == "chat":
         cmd = newSayCommand(msg.Client, room, msg.Payload)
       case msg.Type == "nick":

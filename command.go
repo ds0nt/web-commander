@@ -34,19 +34,26 @@ type joinCommand struct {
   Client *client
   Room *room
   RoomName string
+  Rooms *rooms
 }
 
-func newJoinCommand(client *client, room *room, data interface{}) *joinCommand {
+func newJoinCommand(client *client, room *room, data interface{}, rooms *rooms) *joinCommand {
   return &joinCommand{
     Client: client,
     Room: room,
     RoomName: data.(string),
+    Rooms: rooms,
   }
 }
 
 func (s *joinCommand) Execute() {
-  room := Rooms.getRoom(s.RoomName)
-  Rooms.joinClient(s.Client, room)
+  room := s.Rooms.getRoom(s.RoomName)
+  s.Rooms.joinClient(s.Client, room)
+  s.Client.sendMessage(&clientOutMessage{
+    Type:    "join",
+    Room: s.Room.Name,
+    Payload: s.RoomName,
+  })
 }
 
 // Nick Command

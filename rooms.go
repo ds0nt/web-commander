@@ -21,14 +21,13 @@ func newRooms() *rooms {
 func (r *rooms) getRoom(roomName string) *room {
   room, ok := r.rooms[roomName]
   if !ok {
-    log.Printf("New Room %s\n", roomName)
-    newRoom := newRoom(roomName)
-    r.rooms[roomName] = newRoom
-    go newRoom.run()
-    log.Printf("newRoom: %s\n", newRoom)
-    return newRoom
+    room = newRoom(roomName)
+    r.rooms[roomName] = room
+    go room.run()
+    log.Printf("New Room: %s\n", roomName)
+  } else {
+    log.Printf("Lookup Room: %s\n", roomName)
   }
-  log.Printf("room: %s\n", room)
   return room
 }
 

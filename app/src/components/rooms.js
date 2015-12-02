@@ -11,8 +11,9 @@ export default class Rooms extends React.Component {
       rooms: ["home"],
       currentRoom: "home",
     }
-    Events.on("in:join", this.addRoom)
-    Events.on("in:leave", this.removeRoom)
+    Events.on("in:join", this.addRoom.bind(this))
+    Events.on("in:leave", this.removeRoom.bind(this))
+    Events.on("action:tab:change", this.onTabChange.bind(this))
   }
 
   addRoom(roomName) {
@@ -42,20 +43,10 @@ export default class Rooms extends React.Component {
     );
   }
 
-  renderTab(tab, k) {
-    return (
-      <div key={`room-tab-${k}`} className="ui item" onClick={e => this.onTabChange(e)}>
-        {tab}
-      </div>
-    );
-  }
-
   render() {
-    let tabs = this.state.rooms.map(this.renderTab.bind(this))
     let rooms = this.state.rooms.map(this.renderRoom.bind(this))
 
     return (<span>
-      {tabs}
       {rooms}
     </span>);
   }

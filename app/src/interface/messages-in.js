@@ -19,3 +19,6 @@ socket.register('chat', {
 socket.register('broadcast', {
   handle: data => Events.roomEmit(data.room, 'in:broadcast', data.payload)
 })
+socket.register('join', {
+  handle: data => Events.emit('in:join', data.payload)
+})
