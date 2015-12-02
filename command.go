@@ -2,10 +2,9 @@ package main
 
 import (
   "fmt"
-  "github.com/ChimeraCoder/anaconda"
   // "github.com/huandu/facebook"
   "io/ioutil"
-  "log"
+  log "github.com/Sirupsen/logrus"
   "os/exec"
 )
 
@@ -16,12 +15,11 @@ type command interface {
 // Ping Command
 type pingCommand struct {
   Client *client
+  Room *room
 }
 
-func newPingCommand(client *client, data interface{}) *pingCommand {
-  return &pingCommand{
-    Client: client,
-  }
+func newPingCommand(client *client, room *room, data interface{}) *pingCommand {
+  return &pingCommand{client, room}
 }
 
 func (s *pingCommand) Execute() {
@@ -31,39 +29,37 @@ func (s *pingCommand) Execute() {
   })
 }
 
-type anacondaConfig struct {
-  ConsumerKey    string
-  ConsumerSecret string
-  AccessToken    string
-  AccessSecret   string
+// Nick Command
+type joinCommand struct {
+  Client *client
+  Room *room
+  RoomName string
 }
 
-var twitterApi *anaconda.TwitterApi
-
-func NewAnaconda() {
-  twitter := anacondaConfig{
-    config.Consumer.Key,
-    config.Consumer.Secret,
-    config.Access.Token,
-    config.Access.Secret,
+func newJoinCommand(client *client, room *room, data interface{}) *joinCommand {
+  return &joinCommand{
+    Client: client,
+    Room: room,
+    RoomName: data.(string),
   }
-
-  anaconda.SetConsumerKey(twitter.ConsumerKey)
-  anaconda.SetConsumerSecret(twitter.ConsumerSecret)
-
-  twitterApi = anaconda.NewTwitterApi(twitter.AccessToken, twitter.AccessSecret)
 }
 
+func (s *joinCommand) Execute() {
+  room := Rooms.getRoom(s.RoomName)
+  Rooms.joinClient(s.Client, room)
+}
 
 // Nick Command
 type nickCommand struct {
   Client *client
+  Room *room
   Nick   string
 }
 
-func newNickCommand(client *client, data interface{}) *nickCommand {
+func newNickCommand(client *client, room *room, data interface{}) *nickCommand {
   return &nickCommand{
     Client: client,
+    Room: room,
     Nick:   data.(string),
   }
 
@@ -72,28 +68,30 @@ func newNickCommand(client *client, data interface{}) *nickCommand {
 func (s *nickCommand) Execute() {
   old := s.Client.Name
   s.Client.Name = s.Nick
-  go s.Client.room.broadcast(fmt.Sprintf("%s has changed their name to %s.", old, s.Client.Name))
+  go s.Room.broadcast(fmt.Sprintf("%s has changed their name to %s.", old, s.Client.Name))
 }
 
 // Nick Command
 type scriptCommand struct {
   Client *client
+  Room *room
   Script  string
   Name string
 }
 
-func newScriptCommand(client *client, data interface{}) *scriptCommand {
+func newScriptCommand(client *client, room *room, data interface{}) *scriptCommand {
   payload := data.(map[string]interface {})
   return &scriptCommand{
     Client: client,
+    Room: room,
     Script:  payload["script"].(string),
     Name: payload["name"].(string),
   }
 }
 
 func (s *scriptCommand) Execute() {
-  go s.Client.room.broadcast(fmt.Sprintf("%s has created script $%s", s.Client.Name, s.Name))
-  go s.Client.room.broadcast(fmt.Sprintf("%s", s.Script))
+  go s.Room.broadcast(fmt.Sprintf("%s has created script $%s", s.Client.Name, s.Name))
+  go s.Room.broadcast(fmt.Sprintf("%s", s.Script))
   ioutil.WriteFile(fmt.Sprintf("jobs/%s.js", s.Name), []byte(s.Script), 0644)
 
 }
@@ -101,13 +99,15 @@ func (s *scriptCommand) Execute() {
 // Nick Command
 type runCommand struct {
   Client *client
+  Room *room
   Name string
 }
 
-func newRunCommand(client *client, data interface{}) *runCommand {
+func newRunCommand(client *client, room *room, data interface{}) *runCommand {
   payload := data.(map[string]interface {})
   return &runCommand{
     Client: client,
+    Room: room,
     Name: payload["name"].(string),
   }
 }
@@ -119,31 +119,33 @@ func (s *runCommand) Execute() {
         log.Fatal(err)
     }
     fmt.Printf("Running Script: %s\n", out)
-    s.Client.room.broadcast(fmt.Sprintf("results: \n%s", out))
+    s.Room.broadcast(fmt.Sprintf("results: \n%s", out))
   }()
 }
 
 // Nick Command
 type tweetSearchCommand struct {
   Client *client
+  Room *room
   Query  string
 }
 
-func newSearchTwitterCommand(client *client, data interface{}) *tweetSearchCommand {
+func newSearchTwitterCommand(client *client, room *room, data interface{}) *tweetSearchCommand {
   return &tweetSearchCommand{
     Client: client,
+    Room: room,
     Query:  data.(string),
   }
 }
 
 func (s *tweetSearchCommand) Execute() {
-  s.Client.room.sendAll(clientOutMessage{
+  s.Room.sendAll(clientOutMessage{
     Type:    "chat",
     Payload: fmt.Sprintf("Searching Twitter: %s", s.Query),
   })
   searchResult, _ := twitterApi.GetSearch(s.Query, nil)
   for _, tweet := range searchResult.Statuses {
-    s.Client.room.sendAll(clientOutMessage{
+    s.Room.sendAll(clientOutMessage{
       Type:    "chat",
       Payload: fmt.Sprintf("Twitter Search Result: %s", tweet.Text),
     })
@@ -152,36 +154,43 @@ func (s *tweetSearchCommand) Execute() {
 // Nick Command
 type tweetCommand struct {
   Client *client
+  Room *room
   Tweet  string
 }
 
-func newTweetCommand(client *client, data interface{}) *tweetCommand {
+func newTweetCommand(client *client, room *room, data interface{}) *tweetCommand {
   return &tweetCommand{
     Client: client,
+    Room: room,
     Tweet:  data.(string),
   }
 }
 
 func (s *tweetCommand) Execute() {
   twitterApi.PostTweet(s.Tweet, nil)
-  fmt.Println("Tweet tweet!")
+  s.Room.sendAll(clientOutMessage{
+    Type:    "chat",
+    Payload: fmt.Sprintf("Posted Tweet: %s", s.Client.Name, s.Tweet),
+  })
 }
 
 // Say Command
 type sayCommand struct {
   Client *client
+  Room *room
   Text   string
 }
 
-func newSayCommand(client *client, data interface{}) *sayCommand {
+func newSayCommand(client *client, room *room, data interface{}) *sayCommand {
   return &sayCommand{
     Client: client,
+    Room: room,
     Text:   data.(string),
   }
 }
 
 func (s *sayCommand) Execute() {
-  s.Client.room.sendAll(clientOutMessage{
+  s.Room.sendAll(clientOutMessage{
     Type:    "chat",
     Payload: fmt.Sprintf("%s: %s", s.Client.Name, s.Text),
   })

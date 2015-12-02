@@ -2,14 +2,13 @@ package main
 
 import (
   "github.com/gorilla/websocket"
-  "github.com/gorilla/mux"
   "fmt"
-  "log"
+  log "github.com/Sirupsen/logrus"
   "net/http"
 )
 
 type room struct {
-  id string
+  Name string
   counter int
   forward chan clientOutMessage
   join chan *client
@@ -24,16 +23,29 @@ type roomMessage struct {
 }
 
 
-func newRoom(id string) *room {
+const (
+  socketBufferSize  = 1024
+  messageBufferSize = 256
+)
+
+var upgrader = &websocket.Upgrader{
+  ReadBufferSize: socketBufferSize,
+  WriteBufferSize: socketBufferSize,
+  CheckOrigin: func(r *http.Request) bool {
+    return true
+  },
+}
+
+func newRoom(name string) *room {
   room := &room{
-    id: id,
+    Name: name,
     counter: 0,
     forward: make(chan clientOutMessage),
     join:    make(chan *client),
     leave:   make(chan *client),
     clients: make(map[*client]bool),
   }
-  log.Printf("Creating Room: %v\n", id)
+  log.Printf("Creating Room: %v\n", name)
   return room
 }
 
@@ -61,11 +73,11 @@ func (r *room) doJoin(client *client) {
   r.clients[client] = true
 
   go r.broadcast(fmt.Sprintf("%s has joined the channel.", client.Name))
-  client.sendMessage(&clientOutMessage{"chat", "Welcome to web commander."})
-  client.sendMessage(&clientOutMessage{"chat", "The current list of users are:"})
+  client.sendMessage(&clientOutMessage{"chat", r.Name, "Welcome to web commander."})
+  client.sendMessage(&clientOutMessage{"chat", r.Name, "The current list of users are:"})
 
   for c := range r.clients {
-    client.sendMessage(&clientOutMessage{"chat", c.Name})
+    client.sendMessage(&clientOutMessage{"chat", r.Name, c.Name})
   }
 }
 
@@ -75,9 +87,10 @@ func (r *room) doLeave(client *client) {
 }
 
 func (r *room) doSendAll(msg clientOutMessage) {
-    for client := range r.clients {
-      client.sendMessage(&msg)
-    }
+  msg.Room = r.Name
+  for client := range r.clients {
+    client.sendMessage(&msg)
+  }
 }
 
 func (r *room) run() {
@@ -91,53 +104,4 @@ func (r *room) run() {
       r.doSendAll(msg)
     }
   }
-}
-
-const (
-  socketBufferSize  = 1024
-  messageBufferSize = 256
-)
-
-var upgrader = &websocket.Upgrader{
-  ReadBufferSize: socketBufferSize,
-  WriteBufferSize: socketBufferSize,
-  CheckOrigin: func(r *http.Request) bool {
-    return true
-  },
-}
-
-type rooms struct {
-  rooms map[string]*room
-}
-
-func newRooms() *rooms {
-  return &rooms{
-    rooms: make(map[string]*room),
-  }
-}
-
-func (all *rooms) Handle(w http.ResponseWriter, req *http.Request) {
-  log.Println("Connecting to room")
-  vars := mux.Vars(req)
-  roomId := vars["id"]
-
-  toRoom, ok := all.rooms[roomId]
-  if !ok {
-    toRoom = newRoom(roomId)
-    go toRoom.run()
-  }
-
-  log.Printf("Web Socket Upgrade")
-  socket, err := upgrader.Upgrade(w, req, nil)
-  if err != nil {
-    log.Fatal("ServeHTTP:", err)
-    return
-  }
-
-  client := newClient(socket, toRoom)
-  toRoom.joinClient(client)
-  defer toRoom.leaveClient(client)
-
-  go client.write()
-  client.read()
 }

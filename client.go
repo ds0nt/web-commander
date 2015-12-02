@@ -2,7 +2,7 @@ package main
 
 import (
   "github.com/gorilla/websocket"
-  "log"
+  log "github.com/Sirupsen/logrus"
   "encoding/json"
 )
 
@@ -10,21 +10,23 @@ type client struct {
   socket *websocket.Conn
   Name   string
   out   chan *clientOutMessage
-  room   *room
 }
 
 type clientMessage struct {
   Type string `json:"type"`
+  Room string `json:"room"`
   Payload interface{} `json:"payload"`
   Client *client
 }
 type clientOutMessage struct {
   Type string `json:"type"`
+  Room string `json:"room"`
   Payload interface{} `json:"payload"`
 }
 
-func newClient(socket *websocket.Conn, room *room) *client {
-  return &client{socket, "", make(chan *clientOutMessage, messageBufferSize), room }
+func newClient(socket *websocket.Conn) *client {
+  log.Printf("Creating New Client: %s", socket.RemoteAddr())
+  return &client{socket, "", make(chan *clientOutMessage, messageBufferSize)}
 }
 
 func (c *client) sendMessage(cmsg *clientOutMessage) {
@@ -34,6 +36,7 @@ func (c *client) sendMessage(cmsg *clientOutMessage) {
 func (c *client) doReadMessage() (*clientMessage, error) {
   var f clientMessage
   _, msg, err := c.socket.ReadMessage()
+  log.Printf("message from %s: %v\n", c.Name, string(msg))
   if err != nil {
     return nil, err
   }
@@ -62,7 +65,7 @@ func (c *client) read() {
   log.Printf("Dropping Client %s: %s", c.Name)
   c.socket.Close()
   close(c.out)
-  c.room.doLeave(c)
+  Rooms.dropClient(c)
 }
 
 func (c *client) write() {

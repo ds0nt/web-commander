@@ -1,7 +1,7 @@
 package main
 
 import (
-
+  log "github.com/Sirupsen/logrus"
 )
 
 type Switch struct {
@@ -16,27 +16,32 @@ func NewSwitch() *Switch {
   }
 }
 
-func (s *Switch) Run() {
+func (s *Switch) Run(rooms *rooms) {
   go func() {
     var msg *clientMessage
     for {
       msg = <-s.Messages
+      log.Printf("Routing Message: %s", msg)
+      room := rooms.getRoom(msg.Room)
+      log.Printf("Client %s sent of type %s to room %s\n", msg.Client.Name, msg.Type, room)
       var cmd command
       switch {
       case msg.Type == "ping":
-        cmd = newPingCommand(msg.Client, msg.Payload)
+        cmd = newPingCommand(msg.Client, room, msg.Payload)
+      case msg.Type == "join":
+        cmd = newJoinCommand(msg.Client, room, msg.Payload)
       case msg.Type == "chat":
-        cmd = newSayCommand(msg.Client, msg.Payload)
+        cmd = newSayCommand(msg.Client, room, msg.Payload)
       case msg.Type == "nick":
-        cmd = newNickCommand(msg.Client, msg.Payload)
+        cmd = newNickCommand(msg.Client, room, msg.Payload)
       case msg.Type == "tweet":
-        cmd = newTweetCommand(msg.Client, msg.Payload)
+        cmd = newTweetCommand(msg.Client, room, msg.Payload)
       case msg.Type == "script":
-        cmd = newScriptCommand(msg.Client, msg.Payload)
+        cmd = newScriptCommand(msg.Client, room, msg.Payload)
       case msg.Type == "run":
-        cmd = newRunCommand(msg.Client, msg.Payload)
+        cmd = newRunCommand(msg.Client, room, msg.Payload)
       case msg.Type == "search-twitter":
-        cmd = newSearchTwitterCommand(msg.Client, msg.Payload)
+        cmd = newSearchTwitterCommand(msg.Client, room, msg.Payload)
       default:
         cmd = newBadCommand(msg.Client)
       }
