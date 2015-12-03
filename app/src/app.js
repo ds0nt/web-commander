@@ -8,6 +8,7 @@ import HeaderPane from './components/header'
 import UserList from './components/user-list'
 import AssetsList from './components/assets-list'
 import Rooms from './components/rooms'
+import ThreeTest from './components/three-test'
 
 notifications.start()
 
@@ -16,7 +17,11 @@ ReactDOM.render(
     header={<HeaderPane />}
     left={<UserList />}
     right={<AssetsList />}
-    main={<Rooms/>}
+    main={
+      <div>
+          <ThreeTest />
+          <Rooms/>
+      </div>}
     />,
   document.getElementById('application')
 )
